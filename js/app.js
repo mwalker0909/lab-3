@@ -1,46 +1,59 @@
 'use strict';
 
+// Navigation Handler
+$('nav a').on('click', function() {
+  let $pageChoice = $(this).data('tab');
+  $('.tab-content').hide();
+  $('#' + $pageChoice).fadeIn();
+})
+
+// Image constructor function
 function Image(img) {
   this.image_url = img.image_url;
   this.title = img.title;
   this.description = img.description;
   this.keyword = img.keyword;
   this.horns = img.horns;
+  // If apostrophes exists, remove
   this.removeApostrophe = this.title.replace(/'/g, '');
+  // If whitespace exists, remove
   this.removeSpace = this.removeApostrophe.replace(/ /g, '');
 }
 
-Image.allImages = [];
+// Array that holds Page 1 objects
+Image.allImagesPageOne = [];
+// Array that holds Page 2 objects
+Image.allImagesPageTwo = [];
 
+// Handlebar template compiler
+Image.prototype.toHtml = function() {
+  let template = $('#photo-template').html();
+  let templateRender = Handlebars.compile(template);
+  return templateRender(this);
+}
 
-Image.prototype.render = function() {
-  let imageClone = $('#photo-template').clone();
-  let $imageClone = $(imageClone[0].content);
-
-  $imageClone.find('h2').text(this.title);
-  $imageClone.find('img').attr('src', this.image_url);
-  $imageClone.find('p').text(`Number of Horns: ${this.horns}`);
-  $imageClone.find('section').addClass(`${this.keyword} ${this.horns} ${this.removeSpace}`)
-  $imageClone.attr('class', this.title);
-  $imageClone.appendTo('main');
-
-
+// Select option Render
+Image.prototype.selectMenu = function() {
+  // Append keywords to specific optgroup
   $('#keyword-option').append(
     $('<option></option>')
       .attr('value', this.keyword)
       .text(this.keyword));
 
+  // Append titles to specific optgroup
   $('#title-option').append(
     $('<option></option>')
       .attr('value', this.removeSpace)
       .text(this.title));
 
+  // Append horns to specific optgroup
   $('#horn-option').append(
     $('<option></option>')
       .attr('value', this.horns)
       .text(this.horns));
 
   // Loop attributed by https://stackoverflow.com/questions/23729456/how-to-remove-duplicate-dropdown-option-elements-with-same-value
+  // Removes duplicate keywords in the select menu
   let usedNames = {};
   $('#form option').each(function () {
     if(usedNames[this.text]) {
@@ -51,24 +64,90 @@ Image.prototype.render = function() {
   });
 };
 
-Image.getJson = () => {
+
+
+// Retrieve JSON data from page-1.json and push into array
+Image.getJsonPageOne = () => {
   $.get('../data/page-1.json')
     .then(data => {
       data.forEach(item => {
-        Image.allImages.push(new Image(item))
+        Image.allImagesPageOne.push(new Image(item))
       });
     })
-    .then(Image.loadImages);
+    .then(Image.loadImagesPageOne);
 };
 
-Image.loadImages = () => {
-  Image.allImages.forEach(image => image.render());
+// Retrieve JSON data from page-2.json and push into array
+Image.getJsonPageTwo = () => {
+  $.get('../data/page-2.json')
+    .then(data => {
+      data.forEach(item => {
+        Image.allImagesPageTwo.push(new Image(item))
+      });
+    })
+    .then(Image.loadImagesPageTwo);
+};
+
+// Loops through array of images and renders each one
+Image.loadImagesPageOne = () => {
+  Image.allImagesPageOne.forEach(images => {
+    images.selectMenu();
+    $('#pageOne').append(images.toHtml());
+  })
 }
 
+// Loops through array of images and renders each one
+Image.loadImagesPageTwo = () => {
+  Image.allImagesPageTwo.forEach(images => {
+    images.selectMenu();
+    $('#pageTwo').append(images.toHtml());
+  })
+}
+
+// Displays images based on user selected option
 $(`select[name='images'`).on('change', function() {
   let $selectedImage = $(this).val();
   $('section').hide();
   $(`section.${$selectedImage}`).show();
 });
 
-$(() => Image.getJson());
+// jQuery modal trigger
+$('main').on('click', '.sourceImg', function(e) {
+  e.preventDefault();
+  let imgSource = $(this).attr('src');
+  let imgParent = $(this).parent();
+  let modalTitle = $(imgParent).find('h2').text();
+  let modalDesc = $(imgParent).find('p').text();
+  $('#modalTitle').text(modalTitle);
+  $('#modalDesc').text(modalDesc);
+  $('#modalImg').attr('src', imgSource);
+  $('#lightbox-modal').fadeIn();
+})
+
+// Closes modal on click event
+$('#close').on('click', function() {
+  $('#lightbox-modal').fadeOut();
+})
+
+// Search bar functionality
+$('#searchBar').on('keyup', () => {
+  const filter = $('#searchBar').val().toUpperCase();
+  const section = $('section');
+
+  // Loops through and collects classNames and compares to searchbar value
+  for (let i = 0; i < section.length; i++) {
+    let sectionInfo = section[i].getAttribute('class');
+    if (sectionInfo.toUpperCase().indexOf(filter) > -1) {
+      section[i].style.display = '';
+    } else {
+      section[i].style.display = 'none'
+    }
+  }
+})
+
+// Document ready function
+$(document).ready(function() {
+  Image.getJsonPageOne();
+  Image.getJsonPageTwo();
+  $('.tab-content').hide();
+});
