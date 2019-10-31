@@ -1,12 +1,5 @@
 'use strict';
 
-// Navigation Handler
-$('nav a').on('click', function() {
-  let $pageChoice = $(this).data('tab');
-  $('.tab-content').hide();
-  $('#' + $pageChoice).fadeIn();
-})
-
 // Image constructor function
 function Image(img) {
   this.image_url = img.image_url;
@@ -20,20 +13,20 @@ function Image(img) {
   this.removeSpace = this.removeApostrophe.replace(/ /g, '');
 }
 
-// Array that holds Page 1 objects
-Image.allImagesPageOne = [];
-// Array that holds Page 2 objects
-Image.allImagesPageTwo = [];
+Image.allImages = [];
 
-// Handlebar template compiler
-Image.prototype.toHtml = function() {
-  let template = $('#photo-template').html();
-  let templateRender = Handlebars.compile(template);
-  return templateRender(this);
-}
+// Image render function
+Image.prototype.render = function() {
+  let imageClone = $('#photo-template').clone();
+  let $imageClone = $(imageClone[0].content);
 
-// Select option Render
-Image.prototype.selectMenu = function() {
+  $imageClone.find('h2').text(this.title);
+  $imageClone.find('img').attr({'src': this.image_url, 'class': 'sourceImg', 'alt': this.title});
+  $imageClone.find('p').text(`Number of Horns: ${this.horns}`);
+  $imageClone.find('section').addClass(`${this.keyword} ${this.horns} ${this.removeSpace}`)
+  $imageClone.attr('class', this.title);
+  $imageClone.appendTo('main');
+
   // Append keywords to specific optgroup
   $('#keyword-option').append(
     $('<option></option>')
@@ -64,44 +57,20 @@ Image.prototype.selectMenu = function() {
   });
 };
 
-
-
-// Retrieve JSON data from page-1.json and push into array
-Image.getJsonPageOne = () => {
-  $.get('../data/page-1.json')
-    .then(data => {
-      data.forEach(item => {
-        Image.allImagesPageOne.push(new Image(item))
-      });
-    })
-    .then(Image.loadImagesPageOne);
-};
-
-// Retrieve JSON data from page-2.json and push into array
-Image.getJsonPageTwo = () => {
+// Retrieve JSON data and push into array
+Image.getJson = () => {
   $.get('../data/page-2.json')
     .then(data => {
       data.forEach(item => {
-        Image.allImagesPageTwo.push(new Image(item))
+        Image.allImages.push(new Image(item))
       });
     })
-    .then(Image.loadImagesPageTwo);
+    .then(Image.loadImages);
 };
 
 // Loops through array of images and renders each one
-Image.loadImagesPageOne = () => {
-  Image.allImagesPageOne.forEach(images => {
-    images.selectMenu();
-    $('#pageOne').append(images.toHtml());
-  })
-}
-
-// Loops through array of images and renders each one
-Image.loadImagesPageTwo = () => {
-  Image.allImagesPageTwo.forEach(images => {
-    images.selectMenu();
-    $('#pageTwo').append(images.toHtml());
-  })
+Image.loadImages = () => {
+  Image.allImages.forEach(image => image.render());
 }
 
 // Displays images based on user selected option
@@ -111,7 +80,7 @@ $(`select[name='images'`).on('change', function() {
   $(`section.${$selectedImage}`).show();
 });
 
-// jQuery modal trigger
+// jQuery lightbox trigger
 $('main').on('click', '.sourceImg', function(e) {
   e.preventDefault();
   let imgSource = $(this).attr('src');
@@ -124,30 +93,9 @@ $('main').on('click', '.sourceImg', function(e) {
   $('#lightbox-modal').fadeIn();
 })
 
-// Closes modal on click event
 $('#close').on('click', function() {
-  $('#lightbox-modal').fadeOut();
-})
-
-// Search bar functionality
-$('#searchBar').on('keyup', () => {
-  const filter = $('#searchBar').val().toUpperCase();
-  const section = $('section');
-
-  // Loops through and collects classNames and compares to searchbar value
-  for (let i = 0; i < section.length; i++) {
-    let sectionInfo = section[i].getAttribute('class');
-    if (sectionInfo.toUpperCase().indexOf(filter) > -1) {
-      section[i].style.display = '';
-    } else {
-      section[i].style.display = 'none'
-    }
-  }
+  $('#lightbox-modal').hide();
 })
 
 // Document ready function
-$(document).ready(function() {
-  Image.getJsonPageOne();
-  Image.getJsonPageTwo();
-  $('.tab-content').hide();
-});
+$(() => Image.getJson());

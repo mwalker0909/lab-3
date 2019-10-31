@@ -1,45 +1,34 @@
+@import url('reset.css');
+@import url('layouts.css');
+@import url('modules.css');
+@import url('state.css');
+
 * {
   font-family: 'Staatliches', cursive;
+  letter-spacing: 1px;
+  background-color: #c9af98;
 }
 
-h1 {
-  border: 1px solid black;
-  text-align: center;
-}
-
-body {
-  margin-top: 50px; 
-  background-color: rgba(15, 15, 15, 0.489);
-}
-
-main {
-  justify-content: space-evenly;
+#pageOne,
+#pageTwo {
   display: flex;
   flex-wrap: wrap;
-  
+  justify-content: space-evenly;
+  flex-direction: row;
 }
 
 section {
   width: 32%;
-  padding-bottom: 2%;
-  margin-bottom: 2%;
+  padding-bottom: 1%; 
+  margin-bottom: 1%; 
   text-align: center;
-  border: 1px solid red;
-
 }
-  
+
+h2 {
+  padding-bottom: 5px;
+}
+
 img {
   width: 50%;
-  border: 1px solid green;
   height: 200px;
-}
-
-footer {
-  text-align: right;
-  margin-right: 3%;
-  margin-bottom: 1%;
-}
-
-#form {
-  margin-bottom: 10px;
-}
+} 
